@@ -81,8 +81,8 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
             Candidate c = new Candidate(i, sol.maxDistanceOutToIn(i, distanceToNearestCenter));
             cl.add(c);
         }
-        cl.sort(Comparator.comparingDouble(c -> c.cost));
-        //cl.sort(Comparator.comparingInt(c -> c.cost));
+
+        cl.sort(Comparator.comparingInt(c -> c.cost));
 
         return cl;
     }
