@@ -15,6 +15,7 @@ public class PCPDSolution implements Solution {
     private int minDistanceOutToIn;
     private int maxDistanceBetweenSelected;
     private boolean updated;
+
     public PCPDSolution(PCPDInstance instance) {
         this.instance = instance;
         this.distances = this.instance.getDistances();
@@ -52,12 +53,12 @@ public class PCPDSolution implements Solution {
     }
 
 
-    public int maxDistanceOutToIn(int node, int[] distanceToNearestCenter){//Esto es lo que hay que minimizar
+    public int maxDistanceOutToIn(int node, int[] distanceToNearestCenter) {//Esto es lo que hay que minimizar
         int maxDistance = Integer.MIN_VALUE;
         int n = instance.getN();
 
         for (int i = 0; i < n; i++) {
-            if(i==node || selectedNodes.contains(i)) continue;
+            if (i == node || selectedNodes.contains(i)) continue;
 
             int distanceBetween2 = Math.min(distances[node][i], distanceToNearestCenter[i]);
             if (distanceBetween2 > maxDistance) {
@@ -70,17 +71,13 @@ public class PCPDSolution implements Solution {
     }
 
 
-    public int minimumDistanceBetweenSelected(){//Esto es lo que hay que maximizar
+    public int minimumDistanceBetweenSelected(int node) {//Esto es lo que hay que maximizar
         int minDistance = Integer.MAX_VALUE;
         for (int i = 0; i < selectedNodes.size(); i++) {
-            for (int j = 0; j < selectedNodes.size(); j++) {
-                if (i==j) continue;
-                int distanceBetween2 = distances[i][j];
-                if (distanceBetween2 < minDistance){
-                    minDistance = distanceBetween2;
-                }
+            int distanceBetween2 = distances[i][node];
+            if (distanceBetween2 < minDistance) {
+                minDistance = distanceBetween2;
             }
-
         }
         return minDistance;
     }
@@ -93,10 +90,10 @@ public class PCPDSolution implements Solution {
         //i es el nodo no seleccionado y j el seleccionado
         for (int i = 0; i < n; i++) {
             int maxDistanceInOut = Integer.MAX_VALUE;
-            if(this.selectedNodes.contains(i)) continue;
+            if (this.selectedNodes.contains(i)) continue;
             for (int j = 0; j < this.selectedNodes.size(); j++) {
                 int actDistance = distances[i][this.selectedNodes.get(j)];
-                if(actDistance < maxDistanceInOut){
+                if (actDistance < maxDistanceInOut) {
                     maxDistanceInOut = actDistance;
                 }
             }
@@ -111,22 +108,22 @@ public class PCPDSolution implements Solution {
         int minDistanceSelected = Integer.MAX_VALUE;
         for (int i = 0; i < selectedNodes.size(); i++) {
             for (int j = 0; j < selectedNodes.size(); j++) {
-                if(i==j) continue;
+                if (i == j) continue;
                 int actDistance = distances[this.selectedNodes.get(i)][this.selectedNodes.get(j)];
-                if(actDistance < minDistanceSelected){
+                if (actDistance < minDistanceSelected) {
                     minDistanceSelected = actDistance;
                 }
             }
         }
-        this.maxDistanceBetweenSelected =  minDistanceSelected;
+        this.maxDistanceBetweenSelected = minDistanceSelected;
     }
 
     public boolean esFactible() {
-       return selectedNodes.size()==this.instance.getP();
+        return selectedNodes.size() == this.instance.getP();
     }
 
     public int getMinDistanceOutToIn() {
-        if(!updated){
+        if (!updated) {
             updateMinDistanceOutToIn();
             updateMaxDistanceBetweenSelected();
             updated = true;
@@ -135,7 +132,7 @@ public class PCPDSolution implements Solution {
     }
 
     public int getMaxDistanceBetweenSelected() {
-        if(!updated){
+        if (!updated) {
             updateMaxDistanceBetweenSelected();
             updateMinDistanceOutToIn();
             updated = true;
@@ -143,7 +140,7 @@ public class PCPDSolution implements Solution {
         return maxDistanceBetweenSelected;
     }
 
-    public void comprobadorSoluciones(String s){
+    public void comprobadorSoluciones(String s) {
         String[] tok = s.split("\\s+");
         for (int i = 0; i < tok.length; i++) {
             this.selectedNodes.add(Integer.parseInt(tok[i]));
@@ -163,19 +160,19 @@ public class PCPDSolution implements Solution {
     public String toString() {
         StringBuilder stb = new StringBuilder();
         stb.append("Selected: [");
-        for (int i = 0; i < selectedNodes.size()-1; i++) {
-            stb.append(selectedNodes.get(i)+", ");
+        for (int i = 0; i < selectedNodes.size() - 1; i++) {
+            stb.append(selectedNodes.get(i) + ", ");
         }
-        stb.append(selectedNodes.get(selectedNodes.size()-1)+"]\tNon selected: [");
-        for (int i = 0; i < this.instance.getN()-1; i++) {
-            if(!selectedNodes.contains(i)){
-                stb.append(i+", ");
+        stb.append(selectedNodes.get(selectedNodes.size() - 1) + "]\tNon selected: [");
+        for (int i = 0; i < this.instance.getN() - 1; i++) {
+            if (!selectedNodes.contains(i)) {
+                stb.append(i + ", ");
             }
         }
-        if(!selectedNodes.contains(this.instance.getN()-1)){
-            stb.append(this.instance.getN()-1+"]\n");
-        }else{
-            stb.delete(stb.length()-2, stb.length());
+        if (!selectedNodes.contains(this.instance.getN() - 1)) {
+            stb.append(this.instance.getN() - 1 + "]\n");
+        } else {
+            stb.delete(stb.length() - 2, stb.length());
             stb.append("]\n");
         }
 
@@ -187,7 +184,7 @@ public class PCPDSolution implements Solution {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PCPDSolution solution = (PCPDSolution) o;
-        return (this.selectedNodes==solution.selectedNodes);
+        return (this.selectedNodes == solution.selectedNodes);
     }
 
     @Override
@@ -200,7 +197,7 @@ public class PCPDSolution implements Solution {
         List<Integer> nonSelectedNodes = new ArrayList<>();
         int n = instance.getN();
         for (int i = 0; i < n; i++) {
-            if(!selectedNodes.contains(i)){
+            if (!selectedNodes.contains(i)) {
                 nonSelectedNodes.add(i);
             }
         }
@@ -216,6 +213,9 @@ public class PCPDSolution implements Solution {
         }
     }
 
+    public List<Integer> getSelectedNodes() {
+        return selectedNodes;
+    }
 }
 
 

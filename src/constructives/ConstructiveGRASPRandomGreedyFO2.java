@@ -4,11 +4,13 @@ import grafo.optilib.metaheuristics.Constructive;
 import grafo.optilib.tools.RandomManager;
 import structure.PCPDInstance;
 import structure.PCPDSolution;
-import structure.Pareto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 
-public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstance, PCPDSolution> {
+public class ConstructiveGRASPRandomGreedyFO2 implements Constructive<PCPDInstance, PCPDSolution> {
 
     private class Candidate {
         int id;
@@ -23,7 +25,7 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
     private double alpha;
     private int[] distanceToNearestCenter;
 
-    public ConstructiveGRASPRandomGreedyFO1(double alpha) {
+    public ConstructiveGRASPRandomGreedyFO2(double alpha) {
         this.alpha = alpha;
     }
 
@@ -35,23 +37,19 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
 
         int firstSelected = rnd.nextInt(n);
         sol.addToSelectedNodes(firstSelected);
-        this.distanceToNearestCenter = new int[n];
-        for (int i = 0; i < n; i++) {
-            distanceToNearestCenter[i] = sol.getInstance().getDistances()[i][firstSelected];
-        }
 
-        List<Candidate> cl = createCandidateListToF1(sol);
+        List<Candidate> cl = createCandidateListToF2(sol);
 
         //Inicio GRASP
         double realAlpha = ((alpha >= 0) ? alpha : rnd.nextDouble());
 
         while (!sol.esFactible()) {
-            double gmin = cl.get(0).cost;
-            double gmax = cl.get(cl.size() - 1).cost;
-            double th = gmin + realAlpha * (gmax - gmin);
+            double gmax = cl.get(0).cost;
+            double gmin = cl.get(cl.size() - 1).cost;
+            double th = gmax - realAlpha * (gmax - gmin);
             int limit = 0;
 
-            while (limit < cl.size() && cl.get(limit).cost <= th) {
+            while (limit < cl.size() && th <= cl.get(limit).cost ) {
                 limit++;
             }
 
@@ -61,33 +59,23 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
             int nodeToSelect = c.id;
             sol.addToSelectedNodes(nodeToSelect);
 
-            for (Candidate i : cl) {
-                int id = i.id;
-                int distanceToNewCenter = sol.getInstance().getDistances()[id][nodeToSelect];
-                if(distanceToNearestCenter[id] > distanceToNewCenter) distanceToNearestCenter[id] = distanceToNewCenter;
-            }
 
-            for (Candidate candidate : cl) {
-                candidate.cost = sol.maxDistanceOutToIn(candidate.id, distanceToNearestCenter);
-            }
-
-            cl.sort(Comparator.comparingInt(can -> can.cost));
         }
         return sol;
     }
 
 
-    private List<Candidate> createCandidateListToF1(PCPDSolution sol) {
+    private List<Candidate> createCandidateListToF2(PCPDSolution sol) {
         int n = sol.getInstance().getN();
         List<Candidate> cl = new ArrayList<>(n);
 
         for (int i = 0; i < n; i++) {
             if (sol.isSelected(i)) continue;
-            Candidate c = new Candidate(i, sol.maxDistanceOutToIn(i, distanceToNearestCenter));
+            Candidate c = new Candidate(i, sol.minimumDistanceBetweenSelected(i));
             cl.add(c);
         }
 
-        cl.sort(Comparator.comparingInt(c -> c.cost));
+        cl.sort((c1, c2 )-> Integer.compare(c2.cost, c1.cost));
 
         return cl;
     }

@@ -1,6 +1,7 @@
 package experiments;
 
 
+import algorithms.AlgConstructiveFO1;
 import algorithms.MO_VNS;
 import constructives.*;
 import grafo.optilib.metaheuristics.Algorithm;
@@ -45,18 +46,13 @@ public class ExperimentAlgorithm {
         ArrayList<Improvement<PCPDSolution>> localSearchs = new ArrayList<>();
         localSearchs.add(new OneByOneLSFO1());
         localSearchs.add(new OneByOneLSFO2());
-        localSearchs.add(new OneByOneLSFA(0));
-        localSearchs.add(new OneByOneLSFA(0.25));
-        localSearchs.add(new OneByOneLSFA(0.5));
-        localSearchs.add(new OneByOneLSFA(0.75));
-        localSearchs.add(new OneByOneLSFA(1.0));
-        localSearchs.add(new OneByOneLSFA(-1.0));
+
 
         Improvement<PCPDSolution>[] ls = new Improvement[2];
         ls[0] = new OneByOneLSFO1();
         ls[1] = new OneByOneLSFO2();
         Algorithm<PCPDInstance>[] execution = new Algorithm[]{
-             //   new AlgConstructiveFO1(new ConstructiveGRASPRandomGreedyFO1(0.25), 100),
+                new AlgConstructiveFO1(new ConstructiveGRASPRandomGreedyFO1(0.25), 100),
               //  new AlgConstructiveFO2(new ConstructiveGRASPGreedyRandomFO2(0.25), 100),
 
                 //new IteratedLocalSearch(constructives, new OneByOneLSFA(-1.0), 10, 100, 0.25),
@@ -67,7 +63,7 @@ public class ExperimentAlgorithm {
 ////                new IteratedGreedy(constructives, localSearchs, 10, 100, -1.0),
 //                new EpsilonConstraintSerio(1800)
 //                new MO_VNS(new ConstructiveGRASPRandomGreedyFA(0.25, 0.25), new VND(ls), 100, 0.05, 0.5),
-                new MO_VNS(constructives, new VND(ls), 100, 0.05, 0.5),
+//                new MO_VNS(constructives, new VND(ls), 100, 0.05, 0.5),
 //                new MO_VNS(new ConstructiveGRASPRandomGreedyFA(0.75, 0.25), new VND(ls), 100, 0.05, 0.5),
 //                new MO_VNS(new ConstructiveGRASPRandomGreedyFA(-1.0, 0.25), new VND(ls), 100, 0.05, 0.2),
 //                new MO_VNS(new ConstructiveGRASPRandomGreedyFA(-1.0, -1.0), new VND(ls), 100, 0.05, 0.3),
