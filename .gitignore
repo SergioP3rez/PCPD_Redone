@@ -1,0 +1,11 @@
+.idea/*
+*.iml
+instances/*
+src/instances/*
+out/*
+experiments/*
+src/.DS_Store
+src/META-INF/*
+*.log
+*.txt
+*.DS_Store
