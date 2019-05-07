@@ -66,7 +66,12 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
                 int distanceToNewCenter = sol.getInstance().getDistances()[id][nodeToSelect];
                 if(distanceToNearestCenter[id] > distanceToNewCenter) distanceToNearestCenter[id] = distanceToNewCenter;
             }
-            createCandidateListToF1(sol);
+
+            for (Candidate candidate : cl) {
+                candidate.cost = sol.maxDistanceOutToIn(candidate.id, distanceToNearestCenter);
+            }
+
+            cl.sort(Comparator.comparingInt(can -> can.cost));
         }
         return sol;
     }

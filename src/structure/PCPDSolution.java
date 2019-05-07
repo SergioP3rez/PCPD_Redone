@@ -55,17 +55,17 @@ public class PCPDSolution implements Solution {
     public int maxDistanceOutToIn(int node, int[] distanceToNearestCenter){//Esto es lo que hay que minimizar
         int maxDistance = Integer.MIN_VALUE;
         int n = instance.getN();
-        selectedNodes.add(node);
-        for (int i = 0; i < n; i++) {
-            if(selectedNodes.contains(i)) continue;
-            int distanceBetween2 = distances[node][i];
 
+        for (int i = 0; i < n; i++) {
+            if(i==node || selectedNodes.contains(i)) continue;
+
+            int distanceBetween2 = Math.min(distances[node][i], distanceToNearestCenter[i]);
             if (distanceBetween2 > maxDistance) {
-                maxDistance = Math.max(maxDistance, distanceToNearestCenter[i]);
+                maxDistance = distanceBetween2;
             }
 
         }
-        selectedNodes.remove(Integer.valueOf(node));
+
         return maxDistance;
     }
 
