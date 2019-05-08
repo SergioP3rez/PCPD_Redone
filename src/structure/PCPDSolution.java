@@ -74,7 +74,7 @@ public class PCPDSolution implements Solution {
     public int minimumDistanceBetweenSelected(int node) {//Esto es lo que hay que maximizar
         int minDistance = Integer.MAX_VALUE;
         for (int i = 0; i < selectedNodes.size(); i++) {
-            int distanceBetween2 = distances[i][node];
+            int distanceBetween2 = distances[selectedNodes.get(i)][node];
             if (distanceBetween2 < minDistance) {
                 minDistance = distanceBetween2;
             }
@@ -152,6 +152,11 @@ public class PCPDSolution implements Solution {
         updated = false;
     }
 
+    public void removeFromSelectedNodes(int nodeToUnselect) {
+        selectedNodes.remove(Integer.valueOf(nodeToUnselect));
+        updated = false;
+    }
+
     public boolean isSelected(int i) {
         return selectedNodes.contains(i);
     }
@@ -175,7 +180,6 @@ public class PCPDSolution implements Solution {
             stb.delete(stb.length() - 2, stb.length());
             stb.append("]\n");
         }
-
         return stb.toString();
     }
 
@@ -205,17 +209,20 @@ public class PCPDSolution implements Solution {
             int nodeId = rnd.nextInt(this.selectedNodes.size());
             int nodeToSelectId = rnd.nextInt(nonSelectedNodes.size());
 
-            int nodeToSelect = nonSelectedNodes.remove(nodeToSelectId);
-            int node = selectedNodes.remove(nodeId);
+            int nodeToSelect = nonSelectedNodes.get(nodeToSelectId);
+            int node = selectedNodes.get(nodeId);
 
+            addToSelectedNodes(nodeToSelect);
+            removeFromSelectedNodes(node);
             nonSelectedNodes.add(node);
-            selectedNodes.add(nodeToSelect);
         }
     }
 
     public List<Integer> getSelectedNodes() {
         return selectedNodes;
     }
+
+
 }
 
 

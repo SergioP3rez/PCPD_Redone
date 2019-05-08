@@ -52,6 +52,8 @@ public class Pareto {
             removed++;
         }
         if (enter) {
+            newSol.getMinDistanceOutToIn();
+            newSol.getMaxDistanceBetweenSelected();
             front.add(new PCPDSolution(newSol));
             modifiedSinceLastAsk = true;
         }

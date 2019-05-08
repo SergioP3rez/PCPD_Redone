@@ -7,6 +7,7 @@ import grafo.optilib.structure.Solution;
 import grafo.optilib.tools.Timer;
 import structure.PCPDInstance;
 import structure.PCPDSolution;
+import structure.Pareto;
 
 public class AlgConstructiveFO2 implements Algorithm<PCPDInstance> {
     private PCPDSolution best;
@@ -21,10 +22,12 @@ public class AlgConstructiveFO2 implements Algorithm<PCPDInstance> {
     public Result execute(PCPDInstance instance) {
         best = null;
         Result r = new Result(instance.getName());
+        Pareto.reset();
         System.out.print(instance.getName()+"\t");
         Timer.initTimer(1800*1000);
         for (int i = 0; i < iters; i++) {
             PCPDSolution sol = c.constructSolution(instance);
+            Pareto.add(sol);
             if(best == null || sol.getMaxDistanceBetweenSelected() > best.getMaxDistanceBetweenSelected()){
                 best = sol;
             }

@@ -15,6 +15,7 @@ public class VND implements Improvement<PCPDSolution> {
     public void improve(PCPDSolution sol) {
         int k = 0;
         while (k < localSearchs.length) {
+            sol = new PCPDSolution(sol);
             localSearchs[k].improve(sol);
             Pareto.add(sol);
             if (Pareto.isModifiedSinceLastAsk()) {

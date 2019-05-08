@@ -7,6 +7,9 @@ import grafo.optilib.structure.Solution;
 import grafo.optilib.tools.Timer;
 import structure.PCPDInstance;
 import structure.PCPDSolution;
+import structure.Pareto;
+
+import java.util.Calendar;
 
 public class AlgConstructiveFO1 implements Algorithm<PCPDInstance> {
     private PCPDSolution best;
@@ -21,10 +24,12 @@ public class AlgConstructiveFO1 implements Algorithm<PCPDInstance> {
     public Result execute(PCPDInstance instance) {
         best = null;
         Result r = new Result(instance.getName());
+        Pareto.reset();
         System.out.print(instance.getName()+"\t");
         Timer.initTimer(1800*1000);
         for (int i = 0; i < iters; i++) {
             PCPDSolution sol = c.constructSolution(instance);
+            Pareto.add(sol);
             if(best == null || sol.getMinDistanceOutToIn() < best.getMinDistanceOutToIn()){
                 best = sol;
             }
@@ -33,6 +38,14 @@ public class AlgConstructiveFO1 implements Algorithm<PCPDInstance> {
         }
 
 
+        Calendar cal = Calendar.getInstance();
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        int month = cal.get(Calendar.MONTH) + 1;
+        int year = cal.get(Calendar.YEAR);
+
+        String date = String.format("%04d-%02d-%02d", year, month, day);
+
+        Pareto.saveToFile("experiments/" + date + "/" + this.toString() + "/pareto_only_constLS" + instance.getName());
         double secs = Timer.getTime()/1000.0;
         r.add("MIN MAX DISTANCE", best.getMinDistanceOutToIn());
         r.add("MAX MIN DISTANCE", best.getMaxDistanceBetweenSelected());

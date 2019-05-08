@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstance, PCPDSolution>{
+public class ConstructiveGRASPRandomGreedyFA implements Constructive<PCPDInstance, PCPDSolution> {
 
     private double alpha;
-    private int[] distanceToNearestCenter;
+    private double alphaFA;
 
-    public ConstructiveGRASPRandomGreedyFO1(double alpha) {
+    public ConstructiveGRASPRandomGreedyFA(double alpha, double alphaFA) {
         this.alpha = alpha;
+        this.alphaFA = alphaFA;
     }
 
     @Override
@@ -32,34 +33,33 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
         }
 
         double realAlpha = ((alpha >= 0) ? alpha : rnd.nextDouble());
+        double realAlphaFA = ((alphaFA >= 0) ? alphaFA : rnd.nextDouble());
 
 
         int firstSelected = rnd.nextInt(n);
         int idFirst = cl.remove(firstSelected);
 
         sol.addToSelectedNodes(idFirst);
-        this.distanceToNearestCenter = new int[n];
-        for (int i = 0; i < n; i++) {
-            distanceToNearestCenter[i] = sol.getInstance().getDistances()[i][firstSelected];
-        }
-
         while (!sol.esFactible()) {
             int numberOfCandidates = (int) Math.ceil(realAlpha * cl.size());
             int nodeToSelect = 0;
-            //PARA LA F1
-            int minPromissing = Integer.MAX_VALUE;
-            int actualMin;
-            //FIN PARA LA F1
+
+            double minPromissing = Integer.MAX_VALUE;
+            double actualMin;
+
             for (int i = 0; i < numberOfCandidates; i++) {
                 int idNodeToSelect = rnd.nextInt(cl.size());
-                actualMin = sol.maxDistanceOutToIn(cl.get(idNodeToSelect), distanceToNearestCenter);
-                if(actualMin < minPromissing){
+                sol.addToSelectedNodes(cl.get(idNodeToSelect));
+                actualMin = realAlphaFA * sol.getMinDistanceOutToIn() - (1 - realAlphaFA) * sol.getMaxDistanceBetweenSelected();
+                if (Utils.compareDouble(actualMin, minPromissing) < 0) {
                     nodeToSelect = cl.get(idNodeToSelect);
                     minPromissing = actualMin;
                 }
+                sol.removeFromSelectedNodes(cl.get(idNodeToSelect));
             }
             cl.remove(Integer.valueOf(nodeToSelect));
             sol.addToSelectedNodes(nodeToSelect);
+
         }
 
         Pareto.add(sol);
@@ -69,6 +69,6 @@ public class ConstructiveGRASPRandomGreedyFO1 implements Constructive<PCPDInstan
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName()+", "+alpha+")";
+        return this.getClass().getSimpleName() + ", " + alpha + ", FA: " + alphaFA;
     }
 }
