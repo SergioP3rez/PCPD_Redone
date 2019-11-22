@@ -7,16 +7,15 @@ import structure.PCPDSolution;
 import structure.Pareto;
 import utils.Utils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class OneByOneLSFA implements Improvement<PCPDSolution> {
+public class OneByOneLSFAFirstImp implements Improvement<PCPDSolution> {
 
     private double alpha;
     private Random rnd;
 
-    public OneByOneLSFA(double alpha){
+    public OneByOneLSFAFirstImp(double alpha) {
         this.alpha = alpha;
         this.rnd = new Random(RandomManager.getRandom().nextInt());
     }
@@ -28,20 +27,16 @@ public class OneByOneLSFA implements Improvement<PCPDSolution> {
         int n = sol.getInstance().getN();
 
         boolean improved = true;
-        double actualAggregatedValue = realAlpha * sol.getMinDistanceOutToIn() - (1-realAlpha)*sol.getMaxDistanceBetweenSelected();
+        double actualAggregatedValue = realAlpha * sol.getMinDistanceOutToIn() - (1 - realAlpha) * sol.getMaxDistanceBetweenSelected();
 
-        while (improved){
+        while (improved) {
             improved = false;
             List<Integer> selected = sol.getSelectedNodes();
             int p = sol.getInstance().getP();
-            
+
 //            Collections.shuffle(selected, RandomManager.getRandom());
-            int bestNodeToAdd = -1;
-            int bestNodeToQuit = -1;
-             //TODO: Hay que ver si comprobamos el que i y selected.get(j) no son el mismo,
-             //  aunque creo que no pasará porque el isSelected descarta esa posibildad
             for (int i = 0; i < n; i++) {
-                if(sol.isSelected(i)) continue;
+                if (sol.isSelected(i)) continue;
                 for (int j = 0; j < p; j++) {
 
 
@@ -50,23 +45,19 @@ public class OneByOneLSFA implements Improvement<PCPDSolution> {
                     sol.addToSelectedNodes(i);
 
                     Pareto.add(sol);
-                    double newAggregatedValue = (realAlpha * sol.getMinDistanceOutToIn()) - (1-realAlpha)*sol.getMaxDistanceBetweenSelected();
+                    double newAggregatedValue = (realAlpha * sol.getMinDistanceOutToIn()) - (1 - realAlpha) * sol.getMaxDistanceBetweenSelected();
 
-                    if(Utils.compareDouble(newAggregatedValue, actualAggregatedValue) < 0){
+                    if (Utils.compareDouble(newAggregatedValue, actualAggregatedValue) < 0) {
                         actualAggregatedValue = newAggregatedValue;
-                        bestNodeToQuit = nodeToRemove;
-                        bestNodeToAdd = i;
                         improved = true;
+                        break;
                     }
-                    sol.removeFromSelectedNodes(i);
-                    sol.addToSelectedNodes(nodeToRemove);
+//                    sol.removeFromSelectedNodes(i);
+//                    sol.addToSelectedNodes(nodeToRemove);
 
                 }
-
+                if (improved) break;
             }
-            sol.addToSelectedNodes(bestNodeToAdd);
-            sol.removeFromSelectedNodes(bestNodeToQuit);
-
             if (Timer.timeReached()) {
                 return;
             }
@@ -75,5 +66,7 @@ public class OneByOneLSFA implements Improvement<PCPDSolution> {
     }
 
     @Override
-    public String toString() {return this.getClass().getSimpleName()+"("+alpha+")";}
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + alpha + ")";
+    }
 }

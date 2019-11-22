@@ -11,19 +11,24 @@ import structure.PCPDInstance;
 import structure.PCPDSolution;
 import structure.Pareto;
 
+import java.sql.Time;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class IteratedGreedy implements Algorithm<PCPDInstance> {
+public class ParallelIteratedGreedyRandomPert implements Algorithm<PCPDInstance> {
     private ArrayList<Constructive<PCPDInstance, PCPDSolution>> constructives;
     private ArrayList<Improvement<PCPDSolution>> ls;
-    // private CountDownLatch latch;
-    // private ReentrantLock lock;
+    private CountDownLatch latch;
     private int iters;
     private int constructions;
     private double perturbationPercentage;
     private Random rnd;
+
     private class Candidate {
         int id;
         int cost;
@@ -34,62 +39,55 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
         }
     }
 
-    public IteratedGreedy(ArrayList<Constructive<PCPDInstance, PCPDSolution>> constructives, ArrayList<Improvement<PCPDSolution>> ls, int iters, int constructions, double perturbationPercentage) {
+    public ParallelIteratedGreedyRandomPert(ArrayList<Constructive<PCPDInstance, PCPDSolution>> constructives, ArrayList<Improvement<PCPDSolution>> ls, int iters, int constructions, double perturbationPercentage) {
         this.constructives = constructives;
         this.ls = ls;
         this.iters = iters;
         this.constructions = constructions;
         this.perturbationPercentage = perturbationPercentage;
-        this.rnd = new Random(RandomManager.getRandom().nextInt());
+
     }
 
     @Override
     public Result execute(PCPDInstance instance) {
-//        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.rnd = new Random(RandomManager.getRandom().nextInt());
+        ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         Pareto.reset();
         System.out.print(instance.getName() + "\n");
         Result r = new Result(instance.getName());
         Timer.initTimer(1800 * 1000);
-        //latch = new CountDownLatch(constructions);
-        //lock = new ReentrantLock();
 
         Calendar cal = Calendar.getInstance();
         int day = cal.get(Calendar.DAY_OF_MONTH);
         int month = cal.get(Calendar.MONTH) + 1;
         int year = cal.get(Calendar.YEAR);
         String date = String.format("%04d-%02d-%02d", year, month, day);
-
-//        int constructive = 1;
+        CountDownLatch latchConst = new CountDownLatch(constructions * constructives.size());
         for (Constructive<PCPDInstance, PCPDSolution> c : constructives) {
             for (int j = 0; j < constructions; j++) {
-                //pool.submit(() -> {
-                PCPDSolution sol = null;
-                sol = c.constructSolution(instance);
-                //lock.lock();
+
+                PCPDSolution sol = c.constructSolution(instance);
                 Pareto.add(sol);
-
-                PCPDSolution solLS1FO1 = new PCPDSolution(sol);
-                PCPDSolution solLS2FO1 = new PCPDSolution(sol);
-                PCPDSolution solLS1FO2 = new PCPDSolution(sol);
-                PCPDSolution solLS2FO2 = new PCPDSolution(sol);
-
-                ls.get(0).improve(solLS1FO1);
-                ls.get(1).improve(solLS2FO1);
-
-                ls.get(0).improve(solLS1FO2);
-                ls.get(1).improve(solLS2FO2);
-
-                ls.get(0).improve(solLS2FO1);
-                ls.get(1).improve(solLS2FO2);
-
-                ls.get(0).improve(solLS1FO1);
-                ls.get(1).improve(solLS1FO2);
-
+                pool.submit(() -> {
+                    PCPDSolution solLocal = new PCPDSolution(sol);
+                    ls.get(0).improve(solLocal);
+                    latchConst.countDown();
+                });
+                pool.submit(() -> {
+                    PCPDSolution solLocal = new PCPDSolution(sol);
+                    ls.get(1).improve(solLocal);
+                    latchConst.countDown();
+                });
             }
-        }
 
-//        System.out.println("TERMINO DE CONSTRUIR");
-//        Pareto.saveToFile("experiments/" + date + "/" + this.toString() + "/Constructivo/pareto_" + instance.getName());
+        }
+        try {
+            latchConst.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Termino de construir "+ Timer.getTime()/1000 + "s");
+        Pareto.saveToFile("experiments/" + date + "/" + this.toString() + "/Constructivo/pareto_" + instance.getName());
 
         int i = 0;
         while (i <= iters) {
@@ -98,57 +96,92 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
             for (PCPDSolution solu : Pareto.getFront()) {
                 paretoFront.add(new PCPDSolution(solu));
             }
+            CountDownLatch latchIG = new CountDownLatch(paretoFront.size() * (ls.size()-2)*2);
+
 
             for (PCPDSolution sol : paretoFront) {
                 PCPDSolution[] perturbedSolutions = perturbeSol(sol);
                 Pareto.add(perturbedSolutions[0]);
                 Pareto.add(perturbedSolutions[1]);
-                PCPDSolution sol1FA_025 = new PCPDSolution(perturbedSolutions[0]);
-                PCPDSolution sol1FA_0 = new PCPDSolution(perturbedSolutions[0]);
-                PCPDSolution sol1FA_05 = new PCPDSolution(perturbedSolutions[0]);
-                PCPDSolution sol1FA_075 = new PCPDSolution(perturbedSolutions[0]);
-                PCPDSolution sol1FA_1 = new PCPDSolution(perturbedSolutions[0]);
 
-                ls.get(3).improve(sol1FA_025);
-                Pareto.add(sol1FA_025);
+                pool.submit(() -> {
+                    PCPDSolution sol1FA_025 = new PCPDSolution(perturbedSolutions[0]);
+                    ls.get(3).improve(sol1FA_025);
+                    Pareto.add(sol1FA_025);
+                    latchIG.countDown();
+                });
 
-                ls.get(2).improve(sol1FA_0);
-                Pareto.add(sol1FA_0);
+                pool.submit(() -> {
+                    PCPDSolution sol1FA_0 = new PCPDSolution(perturbedSolutions[0]);
+                    ls.get(2).improve(sol1FA_0);
+                    Pareto.add(sol1FA_0);
+                    latchIG.countDown();
+                });
+                pool.submit(() -> {
+                    PCPDSolution sol1FA_05 = new PCPDSolution(perturbedSolutions[0]);
+                    ls.get(4).improve(sol1FA_05);
+                    Pareto.add(sol1FA_05);
+                    latchIG.countDown();
+                });
 
-                ls.get(4).improve(sol1FA_05);
-                Pareto.add(sol1FA_05);
+                pool.submit(() -> {
+                    PCPDSolution sol1FA_075 = new PCPDSolution(perturbedSolutions[0]);
+                    ls.get(5).improve(sol1FA_075);
+                    Pareto.add(sol1FA_075);
+                    latchIG.countDown();
+                });
 
-                ls.get(5).improve(sol1FA_075);
-                Pareto.add(sol1FA_075);
+                pool.submit(() -> {
+                    PCPDSolution sol1FA_1 = new PCPDSolution(perturbedSolutions[0]);
+                    ls.get(6).improve(sol1FA_1);
+                    Pareto.add(sol1FA_1);
+                    latchIG.countDown();
+                });
 
-                ls.get(6).improve(sol1FA_1);
-                Pareto.add(sol1FA_1);
+                pool.submit(() -> {
+                    PCPDSolution sol2FA_025 = new PCPDSolution(perturbedSolutions[1]);
+                    ls.get(3).improve(sol2FA_025);
+                    Pareto.add(sol2FA_025);
+                    latchIG.countDown();
+                });
 
-                PCPDSolution sol2FA_025 = new PCPDSolution(perturbedSolutions[1]);
-                PCPDSolution sol2FA_0 = new PCPDSolution(perturbedSolutions[1]);
-                PCPDSolution sol2FA_05 = new PCPDSolution(perturbedSolutions[1]);
-                PCPDSolution sol2FA_075 = new PCPDSolution(perturbedSolutions[1]);
-                PCPDSolution sol2FA_1 = new PCPDSolution(perturbedSolutions[1]);
-                ls.get(3).improve(sol2FA_025);
-                Pareto.add(sol2FA_025);
+                pool.submit(() -> {
+                    PCPDSolution sol2FA_0 = new PCPDSolution(perturbedSolutions[1]);
+                    ls.get(2).improve(sol2FA_0);
+                    Pareto.add(sol2FA_0);
+                    latchIG.countDown();
+                });
+                pool.submit(() -> {
+                    PCPDSolution sol2FA_05 = new PCPDSolution(perturbedSolutions[1]);
+                    ls.get(4).improve(sol2FA_05);
+                    Pareto.add(sol2FA_05);
+                    latchIG.countDown();
+                });
 
-                ls.get(2).improve(sol2FA_0);
-                Pareto.add(sol2FA_0);
+                pool.submit(() -> {
+                    PCPDSolution sol2FA_075 = new PCPDSolution(perturbedSolutions[1]);
+                    ls.get(5).improve(sol2FA_075);
+                    Pareto.add(sol2FA_075);
+                    latchIG.countDown();
+                });
 
-                ls.get(4).improve(sol2FA_05);
-                Pareto.add(sol2FA_05);
+                pool.submit(() -> {
+                    PCPDSolution sol2FA_1 = new PCPDSolution(perturbedSolutions[1]);
+                    ls.get(6).improve(sol2FA_1);
+                    Pareto.add(sol2FA_1);
+                    latchIG.countDown();
+                });
 
-                ls.get(5).improve(sol2FA_075);
-                Pareto.add(sol2FA_075);
-
-                ls.get(6).improve(sol2FA_1);
-                Pareto.add(sol2FA_1);
-
+            }
+            try {
+                latchIG.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
 
 
+
             //Pareto.saveToFile("/Users/sergio/Proyectos IntelliJ/PCPD/experiments/"+this.toString()+"/pareto_"+instance.getName());
-            Pareto.saveToFile("experiments/" + date + "/" + this.toString() + "TrasPerturbar/pareto_" + instance.getName());
 
             if (Timer.timeReached()) {
                 break;
@@ -162,7 +195,16 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
         }
 
 
+        pool.shutdown();
+
+        try{
+            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
+
         double secs = Timer.getTime() / 1000.0;
+        Pareto.saveToFile("experiments/" + date + "/" + this.toString() + "TrasPerturbar/pareto_" + instance.getName());
 
         r.add("Time (s)", secs);
 
@@ -175,7 +217,6 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
 
     private PCPDSolution[] perturbeSol(PCPDSolution sol) {
 
-        Random rnd = RandomManager.getRandom();
         int p = sol.getInstance().getP();
         PCPDSolution[] toRet;
         List<Integer> selected = new ArrayList<>(sol.getSelectedNodes());
@@ -194,6 +235,9 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
     }
 
     private PCPDSolution[] reconstruct(PCPDSolution sol) {
+//
+//        ArrayList<Integer> candidatesFO1 = (ArrayList<Integer>) createCandidateListRandom(sol);
+//        ArrayList<Integer> candidatesFO2 = (ArrayList<Integer>) createCandidateListRandom(sol);
 
         ArrayList<Candidate> candidatesFO1 = (ArrayList<Candidate>) createCandidateListToF1(sol);
         ArrayList<Candidate> candidatesFO2 = (ArrayList<Candidate>) createCandidateListToF2(sol);
@@ -202,13 +246,13 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
         PCPDSolution solToImproveWithLS2 = new PCPDSolution(sol);
         int i = 0;
 
-        while (!solToImproveWithLS1.esFactible()){
+        while (!solToImproveWithLS1.esFactible()) {
             solToImproveWithLS1.addToSelectedNodes(candidatesFO1.get(i).id);
             i++;
         }
 
         i = 0;
-        while (!solToImproveWithLS2.esFactible()){
+        while (!solToImproveWithLS2.esFactible()) {
             solToImproveWithLS2.addToSelectedNodes(candidatesFO2.get(i).id);
             i++;
         }
@@ -218,11 +262,11 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
         reconstruidas[0] = solToImproveWithLS1;
         reconstruidas[1] = solToImproveWithLS2;
 
-        solToImproveWithLS1.updateMaxDistanceBetweenSelected();
-        solToImproveWithLS1.updateMinDistanceOutToIn();
-
-        solToImproveWithLS2.updateMaxDistanceBetweenSelected();
-        solToImproveWithLS2.updateMinDistanceOutToIn();
+//        solToImproveWithLS1.updateMaxDistanceBetweenSelected();
+//        solToImproveWithLS1.updateMinDistanceOutToIn();
+//
+//        solToImproveWithLS2.updateMaxDistanceBetweenSelected();
+//        solToImproveWithLS2.updateMinDistanceOutToIn();
 
         Pareto.add(solToImproveWithLS1);
         Pareto.add(solToImproveWithLS2);
@@ -266,8 +310,8 @@ public class IteratedGreedy implements Algorithm<PCPDInstance> {
 
     private List<Integer> createCandidateListRandom(PCPDSolution sol) {
         int n = sol.getInstance().getN();
-        List<Integer> cl = IntStream.range(0,n).boxed().collect(Collectors.toList());
-        Collections.shuffle(cl, RandomManager.getRandom());
+        List<Integer> cl = IntStream.range(0, n).boxed().collect(Collectors.toList());
+        Collections.shuffle(cl, rnd);
         return cl;
     }
 

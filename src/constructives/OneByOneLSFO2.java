@@ -25,7 +25,7 @@ public class OneByOneLSFO2 implements Improvement<PCPDSolution> {
             int bestNodeToQuit = -1;
             int actualMaxDistance = sol.getMaxDistanceBetweenSelected();
             List<Integer> selected = new ArrayList<>(sol.getSelectedNodes());
-            Collections.shuffle(selected, RandomManager.getRandom());
+//            Collections.shuffle(selected, RandomManager.getRandom());
             for (int i = 0; i < n; i++) {
                 if(sol.isSelected(i)) continue;
                 for (int j = 0; j < p; j++) {
@@ -33,7 +33,7 @@ public class OneByOneLSFO2 implements Improvement<PCPDSolution> {
                     sol.removeFromSelectedNodes(nodeToUnselect);
                     sol.addToSelectedNodes(i);
                     Pareto.add(sol);
-                    int postDistance = sol.getMinDistanceOutToIn();
+                    int postDistance = sol.getMaxDistanceBetweenSelected();
                     if (postDistance > actualMaxDistance) {
                         actualMaxDistance = postDistance;
                         bestNodeToAdd = i;

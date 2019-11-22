@@ -1,5 +1,6 @@
 package structure;
 
+import experiments.ExperimentAlgorithm;
 import grafo.optilib.structure.Solution;
 import grafo.optilib.tools.RandomManager;
 
@@ -127,6 +128,7 @@ public class PCPDSolution implements Solution {
             updateMinDistanceOutToIn();
             updateMaxDistanceBetweenSelected();
             updated = true;
+            ExperimentAlgorithm.contevs++;
         }
         return minDistanceOutToIn;
     }
@@ -136,6 +138,7 @@ public class PCPDSolution implements Solution {
             updateMaxDistanceBetweenSelected();
             updateMinDistanceOutToIn();
             updated = true;
+            ExperimentAlgorithm.contevs++;
         }
         return maxDistanceBetweenSelected;
     }

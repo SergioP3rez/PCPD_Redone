@@ -11,7 +11,7 @@ public class Pareto {
     private static List<PCPDSolution> front;
     private static boolean modifiedSinceLastAsk;
 
-    public static void reset() {
+    public synchronized static void reset() {
         front = new ArrayList<>(1000);
         modifiedSinceLastAsk = false;
     }
@@ -52,8 +52,8 @@ public class Pareto {
             removed++;
         }
         if (enter) {
-            newSol.getMinDistanceOutToIn();
-            newSol.getMaxDistanceBetweenSelected();
+//            newSol.getMinDistanceOutToIn();
+//            newSol.getMaxDistanceBetweenSelected();
             front.add(new PCPDSolution(newSol));
             modifiedSinceLastAsk = true;
         }

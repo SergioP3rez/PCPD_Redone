@@ -25,15 +25,16 @@ public class ConstructiveGRASPGreedyRandomFA implements Constructive<PCPDInstanc
 
     private double alpha;
     private double alphaFA;
+    private Random rnd;
 
     public ConstructiveGRASPGreedyRandomFA(double alpha, double alphaFA) {
         this.alpha = alpha;
         this.alphaFA = alphaFA;
+        this.rnd = new Random(RandomManager.getRandom().nextInt());
     }
 
     @Override
     public PCPDSolution constructSolution(PCPDInstance instance) {
-        Random rnd = RandomManager.getRandom();
         PCPDSolution sol = new PCPDSolution(instance);
         int n = sol.getInstance().getN();
 
@@ -61,7 +62,7 @@ public class ConstructiveGRASPGreedyRandomFA implements Constructive<PCPDInstanc
 
             int nodeToSelect = c.id;
             sol.addToSelectedNodes(nodeToSelect);
-            sol.getMaxDistanceBetweenSelected();
+            //sol.getMaxDistanceBetweenSelected();
             for (Candidate candidate : cl) {
                 sol.addToSelectedNodes(candidate.id);
                 candidate.cost = realAlphaFA * sol.getMinDistanceOutToIn() - (1 - realAlphaFA) * sol.getMaxDistanceBetweenSelected();
@@ -96,7 +97,7 @@ public class ConstructiveGRASPGreedyRandomFA implements Constructive<PCPDInstanc
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ", " + alpha;
+        return this.getClass().getSimpleName() + ", " + alpha+", FA: "+alphaFA;
     }
 
 }
